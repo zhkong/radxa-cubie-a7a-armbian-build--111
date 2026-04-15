@@ -1,6 +1,9 @@
 name: Build Armbian for Radxa Cubie A7A
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       force_build:
@@ -41,9 +44,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           FORCE="${{ github.event.inputs.force_build }}"
-          if [ "$FORCE" = "true" ]; then
+          EVENT="${{ github.event_name }}"
+          if [ "$FORCE" = "true" ] || [ "$EVENT" = "push" ]; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "Force build requested, skipping dedup check"
+            echo "Force build requested (event=$EVENT), skipping dedup check"
             exit 0
           fi
 
@@ -133,6 +137,9 @@ jobs:
           SHORT_COMMIT="${{ steps.upstream.outputs.short_commit }}"
           FULL_COMMIT="${{ steps.upstream.outputs.commit }}"
           TAG="Armbian_${VERSION}_${SHORT_COMMIT}"
+
+          gh release delete "$TAG" --repo "${{ github.repository }}" --yes 2>/dev/null || true
+          git push origin :"refs/tags/$TAG" 2>/dev/null || true
 
           gh release create "$TAG" \
             --repo "${{ github.repository }}" \
