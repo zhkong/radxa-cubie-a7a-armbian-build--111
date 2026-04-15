@@ -77,6 +77,10 @@ jobs:
         with:
           path: self
 
+      - name: Set up QEMU for cross-compilation
+        if: steps.check.outputs.skip != 'true'
+        uses: docker/setup-qemu-action@v3
+
       - name: Clone upstream build system
         if: steps.check.outputs.skip != 'true'
         run: |
